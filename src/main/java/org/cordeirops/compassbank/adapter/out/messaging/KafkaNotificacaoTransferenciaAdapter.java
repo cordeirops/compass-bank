@@ -10,10 +10,9 @@ public class KafkaNotificacaoTransferenciaAdapter implements NotificacaoTransfer
 
     static final String TOPICO = "notificacoes-transferencia";
 
-    private final KafkaTemplate<String, TransferenciaConcluidaEvent> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
-    public KafkaNotificacaoTransferenciaAdapter(
-            KafkaTemplate<String, TransferenciaConcluidaEvent> kafkaTemplate) {
+    public KafkaNotificacaoTransferenciaAdapter(KafkaTemplate<String, Object> kafkaTemplate) {
         this.kafkaTemplate = kafkaTemplate;
     }
 
