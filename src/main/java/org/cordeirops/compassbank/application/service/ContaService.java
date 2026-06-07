@@ -49,9 +49,10 @@ public class ContaService implements CriarContaUseCase, ConsultarContaUseCase {
     @Transactional(readOnly = true)
     @Override
     public List<Transacao> buscarHistorico(UUID contaId) {
-        if (!contaRepositoryPort.existsById(contaId)) {
+        List<Transacao> transacoes = transacaoRepositoryPort.findByContaId(contaId);
+        if (transacoes.isEmpty() && !contaRepositoryPort.existsById(contaId)) {
             throw new ContaNaoEncontradaException(contaId);
         }
-        return transacaoRepositoryPort.findByContaId(contaId);
+        return transacoes;
     }
 }

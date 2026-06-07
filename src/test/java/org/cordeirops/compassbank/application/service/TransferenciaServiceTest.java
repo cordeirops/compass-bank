@@ -2,20 +2,24 @@ package org.cordeirops.compassbank.application.service;
 
 import org.cordeirops.compassbank.application.dto.TransferenciaResultadoDTO;
 import org.cordeirops.compassbank.application.port.out.ContaRepositoryPort;
-import org.cordeirops.compassbank.application.port.out.NotificacaoTransferenciaPort;
 import org.cordeirops.compassbank.application.port.out.TransacaoRepositoryPort;
+import org.cordeirops.compassbank.domain.event.TransferenciaConcluidaEvent;
 import org.cordeirops.compassbank.domain.exception.ContaNaoEncontradaException;
 import org.cordeirops.compassbank.domain.exception.MesmaContaTransferenciaException;
 import org.cordeirops.compassbank.domain.exception.SaldoInsuficienteException;
 import org.cordeirops.compassbank.domain.model.Conta;
+import org.cordeirops.compassbank.domain.model.Transacao;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -29,7 +33,7 @@ class TransferenciaServiceTest {
 
     @Mock ContaRepositoryPort contaRepositoryPort;
     @Mock TransacaoRepositoryPort transacaoRepositoryPort;
-    @Mock NotificacaoTransferenciaPort notificacaoPort;
+    @Mock ApplicationEventPublisher eventPublisher;
 
     @InjectMocks TransferenciaService transferenciaService;
 
@@ -57,7 +61,27 @@ class TransferenciaServiceTest {
         assertThat(origem.getSaldo()).isEqualByComparingTo("800.00");
         assertThat(destino.getSaldo()).isEqualByComparingTo("700.00");
         verify(transacaoRepositoryPort, times(2)).save(any());
-        verify(notificacaoPort).notificar(any());
+        verify(eventPublisher).publishEvent(any(TransferenciaConcluidaEvent.class));
+    }
+
+    @Test
+    void transferir_sucesso_ambas_transacoes_com_mesmo_transferenciaId() {
+        Conta origem  = new Conta(ORIGEM_ID,  "Ana",   new BigDecimal("1000.00"));
+        Conta destino = new Conta(DESTINO_ID, "Bruno", new BigDecimal("500.00"));
+
+        when(contaRepositoryPort.findByIdComLock(ORIGEM_ID)).thenReturn(Optional.of(origem));
+        when(contaRepositoryPort.findByIdComLock(DESTINO_ID)).thenReturn(Optional.of(destino));
+        when(contaRepositoryPort.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(transacaoRepositoryPort.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        transferenciaService.transferir(ORIGEM_ID, DESTINO_ID, new BigDecimal("100.00"));
+
+        ArgumentCaptor<Transacao> captor = ArgumentCaptor.forClass(Transacao.class);
+        verify(transacaoRepositoryPort, times(2)).save(captor.capture());
+        List<Transacao> salvas = captor.getAllValues();
+        assertThat(salvas.get(0).getTransferenciaId())
+                .isNotNull()
+                .isEqualTo(salvas.get(1).getTransferenciaId());
     }
 
     @Test
@@ -74,7 +98,7 @@ class TransferenciaServiceTest {
 
         verify(contaRepositoryPort, never()).save(any());
         verify(transacaoRepositoryPort, never()).save(any());
-        verify(notificacaoPort, never()).notificar(any());
+        verifyNoInteractions(eventPublisher);
     }
 
     @Test

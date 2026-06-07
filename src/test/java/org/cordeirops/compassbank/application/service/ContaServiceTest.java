@@ -68,6 +68,7 @@ class ContaServiceTest {
     @Test
     void buscarHistorico_contaInexistente_lancaExcecao() {
         UUID id = UUID.randomUUID();
+        when(transacaoRepositoryPort.findByContaId(id)).thenReturn(List.of());
         when(contaRepositoryPort.existsById(id)).thenReturn(false);
 
         assertThatThrownBy(() -> contaService.buscarHistorico(id))
@@ -89,14 +90,35 @@ class ContaServiceTest {
     }
 
     @Test
-    void buscarHistorico_contaExistente_retornaLista() {
+    void criarConta_saldoNegativo_lancaIllegalArgumentException() {
+        assertThatThrownBy(() -> contaService.criarConta("Ana", new BigDecimal("-1")))
+                .isInstanceOf(IllegalArgumentException.class);
+        verify(contaRepositoryPort, never()).save(any());
+    }
+
+    @Test
+    void buscarHistorico_contaComTransacoes_naoVerificaExistenciaNoDb() {
         UUID contaId = UUID.randomUUID();
         Transacao transacao = new Transacao(
-                UUID.randomUUID(), contaId, UUID.randomUUID(),
+                UUID.randomUUID(), UUID.randomUUID(), contaId, UUID.randomUUID(),
                 new BigDecimal("200.00"), TipoTransacao.DEBITO,
                 LocalDateTime.now(), "Transferência enviada"
         );
-        when(contaRepositoryPort.existsById(contaId)).thenReturn(true);
+        when(transacaoRepositoryPort.findByContaId(contaId)).thenReturn(List.of(transacao));
+
+        contaService.buscarHistorico(contaId);
+
+        verify(contaRepositoryPort, never()).existsById(any());
+    }
+
+    @Test
+    void buscarHistorico_contaExistente_retornaLista() {
+        UUID contaId = UUID.randomUUID();
+        Transacao transacao = new Transacao(
+                UUID.randomUUID(), UUID.randomUUID(), contaId, UUID.randomUUID(),
+                new BigDecimal("200.00"), TipoTransacao.DEBITO,
+                LocalDateTime.now(), "Transferência enviada"
+        );
         when(transacaoRepositoryPort.findByContaId(contaId)).thenReturn(List.of(transacao));
 
         List<Transacao> resultado = contaService.buscarHistorico(contaId);

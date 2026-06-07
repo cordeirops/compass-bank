@@ -22,10 +22,6 @@ public class ContaEntity {
     @Column(name = "saldo", nullable = false, precision = 19, scale = 4)
     private BigDecimal saldo;
 
-    @Version
-    @Column(name = "versao", nullable = false)
-    private Long versao;
-
     @CreationTimestamp
     @Column(name = "criada_em", nullable = false, updatable = false)
     private LocalDateTime criadaEm;
@@ -44,8 +40,6 @@ public class ContaEntity {
 
     public BigDecimal getSaldo() { return saldo; }
     public void setSaldo(BigDecimal saldo) { this.saldo = saldo; }
-
-    public Long getVersao() { return versao; }
 
     public LocalDateTime getCriadaEm() { return criadaEm; }
     public LocalDateTime getAtualizadaEm() { return atualizadaEm; }

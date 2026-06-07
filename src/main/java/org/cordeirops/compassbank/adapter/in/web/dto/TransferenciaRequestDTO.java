@@ -1,6 +1,7 @@
 package org.cordeirops.compassbank.adapter.in.web.dto;
 
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
@@ -16,5 +17,6 @@ public record TransferenciaRequestDTO(
 
         @NotNull(message = "Valor é obrigatório")
         @DecimalMin(value = "0.01", message = "Valor mínimo para transferência é R$ 0,01")
+        @Digits(integer = 15, fraction = 4, message = "Valor deve ter no máximo 4 casas decimais")
         BigDecimal valor
 ) {}

@@ -8,6 +8,7 @@ import java.util.UUID;
 
 public record TransacaoResponseDTO(
         UUID id,
+        UUID transferenciaId,
         UUID contaOrigemId,
         UUID contaDestinoId,
         BigDecimal valor,
@@ -18,6 +19,7 @@ public record TransacaoResponseDTO(
     public static TransacaoResponseDTO from(Transacao transacao) {
         return new TransacaoResponseDTO(
                 transacao.getId(),
+                transacao.getTransferenciaId(),
                 transacao.getContaOrigemId(),
                 transacao.getContaDestinoId(),
                 transacao.getValor(),

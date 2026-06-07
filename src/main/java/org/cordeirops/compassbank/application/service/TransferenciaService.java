@@ -3,7 +3,6 @@ package org.cordeirops.compassbank.application.service;
 import org.cordeirops.compassbank.application.dto.TransferenciaResultadoDTO;
 import org.cordeirops.compassbank.application.port.in.RealizarTransferenciaUseCase;
 import org.cordeirops.compassbank.application.port.out.ContaRepositoryPort;
-import org.cordeirops.compassbank.application.port.out.NotificacaoTransferenciaPort;
 import org.cordeirops.compassbank.application.port.out.TransacaoRepositoryPort;
 import org.cordeirops.compassbank.domain.event.TransferenciaConcluidaEvent;
 import org.cordeirops.compassbank.domain.exception.ContaNaoEncontradaException;
@@ -11,8 +10,7 @@ import org.cordeirops.compassbank.domain.exception.MesmaContaTransferenciaExcept
 import org.cordeirops.compassbank.domain.model.Conta;
 import org.cordeirops.compassbank.domain.model.TipoTransacao;
 import org.cordeirops.compassbank.domain.model.Transacao;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,18 +21,16 @@ import java.util.UUID;
 @Service
 public class TransferenciaService implements RealizarTransferenciaUseCase {
 
-    private static final Logger log = LoggerFactory.getLogger(TransferenciaService.class);
-
     private final ContaRepositoryPort contaRepositoryPort;
     private final TransacaoRepositoryPort transacaoRepositoryPort;
-    private final NotificacaoTransferenciaPort notificacaoPort;
+    private final ApplicationEventPublisher eventPublisher;
 
     public TransferenciaService(ContaRepositoryPort contaRepositoryPort,
                                 TransacaoRepositoryPort transacaoRepositoryPort,
-                                NotificacaoTransferenciaPort notificacaoPort) {
+                                ApplicationEventPublisher eventPublisher) {
         this.contaRepositoryPort = contaRepositoryPort;
         this.transacaoRepositoryPort = transacaoRepositoryPort;
-        this.notificacaoPort = notificacaoPort;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -69,23 +65,20 @@ public class TransferenciaService implements RealizarTransferenciaUseCase {
         LocalDateTime agora = LocalDateTime.now();
 
         transacaoRepositoryPort.save(new Transacao(
-                UUID.randomUUID(), contaOrigemId, contaDestinoId,
+                UUID.randomUUID(), transferId, contaOrigemId, contaDestinoId,
                 valor, TipoTransacao.DEBITO, agora,
                 "Transferência enviada para conta " + contaDestinoId
         ));
         transacaoRepositoryPort.save(new Transacao(
-                UUID.randomUUID(), contaOrigemId, contaDestinoId,
+                UUID.randomUUID(), transferId, contaOrigemId, contaDestinoId,
                 valor, TipoTransacao.CREDITO, agora,
                 "Transferência recebida da conta " + contaOrigemId
         ));
 
-        try {
-            notificacaoPort.notificar(new TransferenciaConcluidaEvent(
-                    transferId, contaOrigemId, contaDestinoId, valor, agora
-            ));
-        } catch (Exception e) {
-            log.error("Falha ao notificar transferência {}: {}", transferId, e.getMessage());
-        }
+        // Publicado após o commit via @TransactionalEventListener(AFTER_COMMIT) em TransferenciaEventListener
+        eventPublisher.publishEvent(new TransferenciaConcluidaEvent(
+                transferId, contaOrigemId, contaDestinoId, valor, agora
+        ));
 
         return new TransferenciaResultadoDTO(transferId, contaOrigemId, contaDestinoId, valor, agora);
     }

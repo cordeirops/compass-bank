@@ -124,6 +124,16 @@ class TransferenciaControllerTest {
     }
 
     @Test
+    void transferir_valorComMaisDeQuatroDecimais_retorna400PorValidacao() throws Exception {
+        mockMvc.perform(post("/api/v1/transferencias")
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new TransferenciaRequestDTO(ORIGEM_ID, DESTINO_ID, new BigDecimal("0.00001"))
+                        )))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void transferir_semContaOrigem_retorna400PorValidacao() throws Exception {
         mockMvc.perform(post("/api/v1/transferencias")
                         .contentType(APPLICATION_JSON)

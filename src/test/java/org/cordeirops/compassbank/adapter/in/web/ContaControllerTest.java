@@ -133,7 +133,7 @@ class ContaControllerTest {
     void historico_contaExistente_retorna200ComLista() throws Exception {
         UUID contaId = UUID.randomUUID();
         Transacao transacao = new Transacao(
-                UUID.randomUUID(), contaId, UUID.randomUUID(),
+                UUID.randomUUID(), UUID.randomUUID(), contaId, UUID.randomUUID(),
                 new BigDecimal("200.00"), TipoTransacao.DEBITO,
                 LocalDateTime.now(), "Transferência enviada"
         );

@@ -35,6 +35,7 @@ public class TransacaoPersistenceAdapter implements TransacaoRepositoryPort {
     private TransacaoEntity toEntity(Transacao t) {
         TransacaoEntity entity = new TransacaoEntity();
         entity.setId(t.getId());
+        entity.setTransferenciaId(t.getTransferenciaId());
         entity.setContaOrigemId(t.getContaOrigemId());
         entity.setContaDestinoId(t.getContaDestinoId());
         entity.setValor(t.getValor());
@@ -46,6 +47,7 @@ public class TransacaoPersistenceAdapter implements TransacaoRepositoryPort {
     private Transacao toDomain(TransacaoEntity e) {
         return new Transacao(
                 e.getId(),
+                e.getTransferenciaId(),
                 e.getContaOrigemId(),
                 e.getContaDestinoId(),
                 e.getValor(),

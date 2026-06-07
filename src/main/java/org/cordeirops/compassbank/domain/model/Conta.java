@@ -12,6 +12,9 @@ public class Conta {
     private BigDecimal saldo;
 
     public Conta(UUID id, String nome, BigDecimal saldo) {
+        if (saldo.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Saldo inicial não pode ser negativo");
+        }
         this.id = id;
         this.nome = nome;
         this.saldo = saldo;

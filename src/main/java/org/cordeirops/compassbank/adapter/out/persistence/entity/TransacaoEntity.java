@@ -22,6 +22,9 @@ public class TransacaoEntity {
     @Column(name = "id", nullable = false)
     private UUID id;
 
+    @Column(name = "transferencia_id")
+    private UUID transferenciaId;
+
     @Column(name = "conta_origem_id")
     private UUID contaOrigemId;
 
@@ -46,6 +49,9 @@ public class TransacaoEntity {
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
+
+    public UUID getTransferenciaId() { return transferenciaId; }
+    public void setTransferenciaId(UUID transferenciaId) { this.transferenciaId = transferenciaId; }
 
     public UUID getContaOrigemId() { return contaOrigemId; }
     public void setContaOrigemId(UUID contaOrigemId) { this.contaOrigemId = contaOrigemId; }
